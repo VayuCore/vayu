@@ -1,0 +1,41 @@
+# Vayu (वायु)
+
+> Vayu is an open-source, opinionated Linux memory guardrail and bootstrap toolkit designed for memory-constrained VPS instances (1–8 GB RAM). It prevents out-of-memory (OOM) crashes and kswapd thrashing via tiered memory compression, kernel reclaim tuning, allocator bounds, and genuine rollback guardrails.
+
+## Core Capabilities (4 Pillars)
+- **Tier 1 (In-RAM Compression):** ZRAM (`zstd`/`lz4`) as a fast compressed swap block device inside active RAM (priority 100), compressing cold anonymous pages at typical 2.5:1 to 4:1 ratios with microsecond latency.
+- **Tier 2 (Guarded Fallback Swap):** Lower-priority disk/NVMe swapfile (priority 10) acting as an emergency safety cushion; guarded by disk space validation (`VAYU_DISK_SAFETY_MARGIN_MB=2048`) to prevent filling root filesystems.
+- **Kernel Reclaim & VM Tuning:** Linux 6.1+ Multi-Gen LRU (MGLRU) enabled to eliminate `kswapd` CPU thrashing lockups, with `vm.page-cluster=0` for single 4 KB page decompression, `vm.swappiness=160`, and `vm.vfs_cache_pressure=150`.
+- **Process Guardrails:** Clamps glibc malloc arena fragmentation by enforcing `MALLOC_ARENA_MAX=2` in `/etc/environment` (default glibc scales to 8x CPU cores on 64-bit systems) and bounds worker concurrency.
+
+## Target Hardware & Platform
+- Target Environments: 1–8 GB RAM cloud VPS (Oracle Cloud, AWS, GCP, Hetzner, DigitalOcean, Linode).
+- Supported Operating Systems: Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, Debian 11, Debian 12.
+- Workload Profile: CLI agents, background tasks, automation scripts, microservices, and dev/test servers.
+
+## What Vayu Does & Does Not Do
+- **Does:** Expands addressable virtual memory headroom, optimizes kernel reclaim efficiency, stops OOM kills of background processes, eliminates kswapd 100% CPU lockups.
+- **Does Not:** Create physical RAM or replace hardware scaling for heavy production workloads or large local LLMs (e.g. Ollama 7B/8B). Active hot working sets must fit within physical RAM bandwidth.
+
+## Installation & Quickstart
+```bash
+git clone https://github.com/VayuCore/vayu.git
+cd vayu
+chmod +x vayu setup.sh modules/*.sh bench/*.sh
+sudo ./vayu
+```
+
+## CLI Commands
+- `sudo vayu`: Run safe full optimization pipeline (default: ZRAM, guarded swap, MGLRU, THP madvise, sysctls, glibc bounds).
+- `vayu --verify`: Inspect live memory tiers, true `MemAvailable` capacity, ZRAM compression ratios, PSI pressure, and OOM events.
+- `vayu --bench [OPTS]`: Run reproducible memory pressure, allocation throughput, and subprocess fork latency benchmark.
+- `sudo vayu --reclaim`: Explicit one-time flush of disposable page cache (`drop_caches=3`) and cgroup reclaim.
+- `sudo vayu --memory`: Apply memory and sysctl tunings only.
+- `sudo vayu --python`: Apply Python glibc arena bounds.
+- `sudo vayu --revert`: Revert all settings back to pre-Vayu baseline without clobbering unrelated user configs.
+
+## Opt-in Flags & Configurations
+- `--enable-ksm` (`VAYU_ENABLE_KSM="true"`): Enable Kernel Samepage Merging (disabled by default to prevent 10–30% CPU overhead on 1–2 vCPU VPS).
+- `--tune-network` (`VAYU_ENABLE_BBR="true"`): Enable TCP BBR and FQ qdisc (isolated in `/etc/sysctl.d/99-vayu-bbr.conf`).
+- `--tune-journald` (`VAYU_ENABLE_JOURNALD="true"`): Apply systemd journald log limits (100M disk / 40M runtime).
+- `VAYU_DISK_SAFETY_MARGIN_MB` (default `2048`): Minimum free disk space in MB required after swap allocation.

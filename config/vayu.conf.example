@@ -1,0 +1,84 @@
+# =============================================================================
+# Vayu Configuration File (vayu.conf)
+# =============================================================================
+# Copy this file to /etc/vayu/vayu.conf or place it in the same directory as vayu
+# Values set here override defaults across all setup modules.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Memory & Swap Optimization (Tiered Virtual Memory Architecture)
+# -----------------------------------------------------------------------------
+# ZRAM allocation percentage relative to physical RAM.
+# Values: "auto" (recommended), or a number like 100, 150, 200, 300
+# Tier 1: In-RAM compressed swap block device (zstd/lz4)
+VAYU_ZRAM_PERCENT="auto"
+
+# ZRAM compression algorithm: zstd (highest ratio), lz4 (fastest), lzo
+VAYU_ZRAM_ALGO="zstd"
+
+# Fallback disk swapfile size in Megabytes.
+# Values: "auto" (proportional to RAM, capped by free disk), or exact MB (e.g. 2048, 4096)
+# Tier 2: Lower-priority disk/NVMe swapfile as emergency safety net
+VAYU_SWAP_SIZE_MB="auto"
+
+# Minimum free disk headroom (MB) required to remain available after swap creation.
+# Prevents creating or sizing swap that would risk filling the root filesystem.
+VAYU_DISK_SAFETY_MARGIN_MB="2048"
+
+# Swappiness strategy (0-200 on modern Linux kernels)
+# Recommended: 160 for ZRAM to proactively compress idle background heap
+VAYU_SWAPPINESS="160"
+
+# VFS Cache Pressure: how aggressively the kernel reclaims directory/inode caches
+# Recommended: 150 to prevent file cache bloat on low-memory VMs
+VAYU_VFS_CACHE_PRESSURE="150"
+
+# Transparent Huge Pages mode: madvise (recommended to prevent 2MB fragmentation) or never
+VAYU_THP_MODE="madvise"
+
+# -----------------------------------------------------------------------------
+# 2. Opt-in Subsystems & Side-Effect Controls
+# -----------------------------------------------------------------------------
+# Enable Kernel Samepage Merging (KSM) dynamic page deduplication.
+# Values: false (default, keeps CPU usage at 0% on 1-2 vCPU VPS) | true
+VAYU_ENABLE_KSM="false"
+
+# Enable TCP BBR congestion control and Fair Queueing (FQ) qdisc.
+# Values: false (default, keeps network stack unmodified) | true
+VAYU_ENABLE_BBR="false"
+
+# Apply systemd journald log caps (100MB disk / 40MB runtime, 1-week retention).
+# Values: false (default, keeps system logging defaults) | true
+VAYU_ENABLE_JOURNALD="false"
+
+# Force one-time page cache drop and cgroup memory reclaim during apply.
+# Values: false (default, avoids cold cache disk thrashing; run 'vayu --reclaim' manually) | true
+VAYU_ENABLE_RECLAIM="false"
+
+# -----------------------------------------------------------------------------
+# 2. Python Runtime Tuning (Process Guardrails)
+# -----------------------------------------------------------------------------
+# Glibc memory arenas for multi-threaded Python processes.
+# Default glibc allocates 8 * cores (16 arenas), wasting 100MB+ in fragmented heap.
+# Recommended: 2 for 1-2 GB VMs (Allocator bound: MALLOC_ARENA_MAX=2)
+VAYU_PYTHON_ARENAS="2"
+
+# Prevent Python from writing .pyc bytecode files to disk
+VAYU_PYTHON_NO_BYTECODE="1"
+
+# -----------------------------------------------------------------------------
+# 3. Hermes Agent Options (Optional Example Workload)
+# -----------------------------------------------------------------------------
+# Whether to setup / configure Hermes Agent
+# Values: true | false
+VAYU_SETUP_HERMES="true"
+
+# Maximum concurrent Hermes workers (1 recommended for 1-2 vCPU micro VMs)
+# Concurrency bound to prevent memory starvation
+VAYU_HERMES_MAX_WORKERS="1"
+
+# Disable standalone local web dashboard to save ~35 MB RAM
+VAYU_HERMES_DISABLE_DASHBOARD="true"
+
+# Enable Telegram mobile bot integration if credentials exist
+VAYU_HERMES_ENABLE_TELEGRAM="true"

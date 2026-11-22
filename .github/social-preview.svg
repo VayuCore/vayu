@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" fill="none">
+  <!-- Clean Canvas Background -->
+  <rect width="1280" height="640" fill="#090D16" />
+  <rect width="1278" height="638" x="1" y="1" rx="16" stroke="#1F293D" stroke-width="2" />
+
+  <!-- Subtle Structural Gridlines -->
+  <line x1="80" y1="210" x2="1200" y2="210" stroke="#161F30" stroke-width="1.5" />
+  <line x1="80" y1="490" x2="1200" y2="490" stroke="#161F30" stroke-width="1.5" />
+
+  <!-- Logo Mark (80x80 at x=80, y=90) -->
+  <g transform="translate(80, 90) scale(2.5)">
+    <path d="M5 6 L12 6 L14.5 26 L10.5 26 Z" fill="#00D2EE" />
+    <path d="M27 6 L20 6 L18.6 15 L23.6 15 Z" fill="#00D2EE" />
+    <path d="M23.2 17 L18.3 17 L17.5 26 L21.5 26 Z" fill="#F59E0B" />
+  </g>
+
+  <!-- Title & Sanskrit Subtitle -->
+  <text x="185" y="145" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-weight="700" font-size="52" letter-spacing="2">VAYU</text>
+  <text x="350" y="145" fill="#F59E0B" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-weight="600" font-size="38">वायु</text>
+  <text x="187" y="172" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-weight="600" font-size="14" letter-spacing="3">MEMORY GUARDRAIL &amp; BOOTSTRAP TOOL</text>
+
+  <!-- Editorial Headline -->
+  <text x="80" y="280" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-weight="700" font-size="44" letter-spacing="-0.5">
+    Opinionated Linux Memory Guardrails.
+  </text>
+
+  <!-- Editorial Value Proposition -->
+  <text x="80" y="340" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-size="21" font-weight="400">
+    Prevent OOM crashes &amp; kswapd thrashing on memory-constrained VPS
+  </text>
+  <text x="80" y="375" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif" font-size="21" font-weight="400">
+    instances (1–8 GB RAM) via tiered ZRAM, MGLRU, and process guardrails.
+  </text>
+
+  <!-- Bottom Metadata Row -->
+  <g transform="translate(80, 525)" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="16" font-weight="500">
+    <text x="0" y="0" fill="#00D2EE">github.com/VayuCore/vayu</text>
+    <text x="340" y="0" fill="#334155">·</text>
+    <text x="370" y="0" fill="#94A3B8">1–8 GB Cloud VPS</text>
+    <text x="610" y="0" fill="#334155">·</text>
+    <text x="640" y="0" fill="#94A3B8">Ubuntu &amp; Debian</text>
+    <text x="840" y="0" fill="#334155">·</text>
+    <text x="870" y="0" fill="#10B981">MIT Open Source</text>
+  </g>
+</svg>

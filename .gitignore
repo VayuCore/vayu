@@ -1,0 +1,112 @@
+# =============================================================================
+# Vayu (.gitignore)
+# Opinionated Linux Memory Guardrail & Bootstrap Tool
+# Repository: https://github.com/VayuCore/vayu
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Local Configuration & Secrets (Never commit production credentials)
+# -----------------------------------------------------------------------------
+# Track config/vayu.conf.example, ignore active machine configuration
+config/vayu.conf
+*.conf.local
+*.env
+*.env.*
+!.env.example
+
+# -----------------------------------------------------------------------------
+# 2. Runtime Logs, Telemetry & PID Files
+# -----------------------------------------------------------------------------
+*.log
+*.log.*
+*.pid
+*.state
+*.telemetry
+/var/log/
+/tmp/
+
+# -----------------------------------------------------------------------------
+# 3. Security, Private Keys & SSH Material
+# -----------------------------------------------------------------------------
+*.pem
+*.key
+*.pub
+id_rsa*
+id_ed25519*
+known_hosts*
+*.cert
+*.crt
+
+# -----------------------------------------------------------------------------
+# 4. OS-Specific Metadata
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# -----------------------------------------------------------------------------
+# 5. Editor & IDE Metadata
+# -----------------------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.bak
+
+# -----------------------------------------------------------------------------
+# 6. Python Runtime & Cache (Bytecode & Environments)
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# -----------------------------------------------------------------------------
+# 7. Packaging & Archive Artifacts
+# -----------------------------------------------------------------------------
+*.deb
+*.ddeb
+*.build
+*.buildinfo
+*.changes
+*.tar.gz
+*.tar.xz
+
+# -----------------------------------------------------------------------------
+# 8. Temporary Scratch & Test Dumps
+# -----------------------------------------------------------------------------
+scratch/
+tmp/
+*.tmp
+*.out

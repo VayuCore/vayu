@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Vayu CLI (vayu / setup.sh)
+# =============================================================================
+# Name        : Vayu (वायु)
+# Tagline     : Opinionated Linux Memory Guardrail & Bootstrap Tool
+# Subtitle    : Prevent OOM crashes & kswapd thrashing on memory-constrained VPS (1–8 GB RAM)
+# Target      : Hobbyists, indie builders, dev/test environments, resource-constrained VPS
+# License     : MIT
+# CLI Command : vayu
+# =============================================================================
+
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULES_DIR="$SCRIPT_DIR/modules"
+CONFIG_FILE="${VAYU_CONFIG:-/etc/vayu/vayu.conf}"
+[[ ! -f "$CONFIG_FILE" && -f "$SCRIPT_DIR/config/vayu.conf" ]] && CONFIG_FILE="$SCRIPT_DIR/config/vayu.conf"
+[[ ! -f "$CONFIG_FILE" && -f "$SCRIPT_DIR/config/vayu.conf.example" ]] && CONFIG_FILE="$SCRIPT_DIR/config/vayu.conf.example"
+if [[ -f "$CONFIG_FILE" ]]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_FILE"
+fi
+
+# Colors
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    C_HDR=$'\033[1;36m'; C_OK=$'\033[32m'; C_WARN=$'\033[33m'; C_ERR=$'\033[31m'; C_BOLD=$'\033[1m'; C_RST=$'\033[0m'
+else
+    C_HDR=''; C_OK=''; C_WARN=''; C_ERR=''; C_BOLD=''; C_RST=''
+fi
+
+log_hdr() { printf '\n%s=== %s ===%s\n' "$C_HDR" "$*" "$C_RST"; }
+log_ok()  { printf '  %s✓%s %s\n'        "$C_OK"   "$C_RST" "$*"; }
+log_err() { printf '  %s✗%s %s\n'        "$C_ERR"  "$C_RST" "$*" >&2; }
+
+require_root() {
+    if [[ $EUID -ne 0 ]]; then
+        log_err "Must run as root: sudo $0"
+        exit 1
+    fi
+}
+
+install_cli_globally() {
+    require_root
+    log_hdr "Installing vayu to /usr/local/bin/vayu"
+    ln -sf "$SCRIPT_DIR/vayu" /usr/local/bin/vayu
+    chmod +x /usr/local/bin/vayu
+    log_ok "vayu CLI installed globally! You can now run 'vayu' anywhere."
+    exit 0
+}
+
+show_banner() {
+    if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+        printf '\033[1;36m'
+    fi
+    cat <<'BANNER'
+┌──────────────────────────────────────────────────────────────┐
+│  VAYU (वायु) — Opinionated Linux Memory Guardrail           │
+│  Prevent OOM & kswapd thrashing on 1–8 GB VPS instances     │
+└──────────────────────────────────────────────────────────────┘
+BANNER
+    if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+        printf '\033[0m'
+    fi
+}
+
+usage() {
+    show_banner
+    cat <<EOF
+Usage: sudo vayu [OPTIONS]
+
+Core Actions:
+  (no args)        Run safe full optimization pipeline (recommended)
+  --detect         Inspect hardware specs and kernel capabilities (read-only)
+  --base           Install essential packages (git, nano, curl, jq)
+  --memory         Apply Tiered Memory tuning (ZRAM, MGLRU, sysctls)
+  --python         Apply Python glibc arena & bytecode limits
+  --hermes         Audit and configure Hermes Agent for low-spec VMs (optional)
+  --verify         Run non-destructive telemetry and health report
+  --bench [OPTS]   Run reproducible memory pressure & latency benchmark
+  --reclaim        Safely flush page cache and reclaim disposable memory (one-time)
+  --revert         Revert memory and environment tunings to distro defaults
+  --install-cli    Symlink vayu to /usr/local/bin/vayu for global access
+  -h, --help       Show this help message
+
+Opt-in / Extended Flags (combine with default run or --memory):
+  --enable-ksm     Enable Kernel Samepage Merging (KSM) deduplication
+  --tune-network   Enable TCP BBR and FQ network congestion control
+  --tune-journald  Apply systemd journald disk (100M) and runtime (40M) caps
+
+Configuration:
+  Place custom values in config/vayu.conf or /etc/vayu/vayu.conf
+EOF
+    exit 0
+}
+
+run_full_pipeline() {
+    require_root
+    show_banner
+    log_hdr "Vayu Framework: Full Pipeline Setup"
+
+    # Step 1: Detect
+    log_hdr "[1/6] Hardware & Capability Detection"
+    bash "$MODULES_DIR/01-detect.sh"
+
+    # Step 2: Base System Tools
+    log_hdr "[2/6] Essential Developer & System Tools"
+    bash "$MODULES_DIR/02-system-base.sh"
+
+    # Step 3: Tiered Memory Engine
+    log_hdr "[3/6] Tiered Virtual Memory & Kernel Tunables"
+    bash "$MODULES_DIR/03-tune-memory.sh"
+
+    # Step 4: Python Runtime Limits
+    log_hdr "[4/6] Python Runtime & Glibc Arena Limits"
+    bash "$MODULES_DIR/04-tune-python.sh"
+
+    # Step 5: Hermes Agent Orchestration (Optional)
+    log_hdr "[5/6] Hermes Agent Optimization (Optional Example)"
+    bash "$MODULES_DIR/05-hermes-setup.sh"
+
+    # Step 6: Verify
+    log_hdr "[6/6] Final System Telemetry"
+    bash "$MODULES_DIR/06-verify.sh"
+
+    log_hdr "Deployment Succeeded"
+    log_ok "Your server is optimized with Vayu's 4-pillar memory guardrails!"
+}
+
+# CLI Argument Router & Opt-in Flags
+ACTION="full"
+BENCH_ARGS=()
+export VAYU_ENABLE_KSM="${VAYU_ENABLE_KSM:-false}"
+export VAYU_ENABLE_BBR="${VAYU_ENABLE_BBR:-false}"
+export VAYU_ENABLE_JOURNALD="${VAYU_ENABLE_JOURNALD:-false}"
+export VAYU_ENABLE_RECLAIM="${VAYU_ENABLE_RECLAIM:-false}"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            usage ;;
+        --detect)
+            ACTION="detect" ;;
+        --base)
+            ACTION="base" ;;
+        --memory)
+            ACTION="memory" ;;
+        --python)
+            ACTION="python" ;;
+        --hermes)
+            ACTION="hermes" ;;
+        --verify)
+            ACTION="verify" ;;
+        --bench)
+            ACTION="bench"
+            shift
+            while [[ $# -gt 0 ]]; do
+                BENCH_ARGS+=("$1")
+                shift
+            done
+            break ;;
+        --install-cli)
+            ACTION="install-cli" ;;
+        --reclaim)
+            ACTION="reclaim" ;;
+        --revert)
+            ACTION="revert" ;;
+        --enable-ksm)
+            export VAYU_ENABLE_KSM="true" ;;
+        --tune-network|--enable-bbr)
+            export VAYU_ENABLE_BBR="true" ;;
+        --tune-journald)
+            export VAYU_ENABLE_JOURNALD="true" ;;
+        *)
+            log_err "Unknown option: $1"
+            echo "Run '$0 --help' for usage."
+            exit 1 ;;
+    esac
+    shift
+done
+
+case "$ACTION" in
+    detect)
+        bash "$MODULES_DIR/01-detect.sh" ;;
+    base)
+        require_root
+        bash "$MODULES_DIR/02-system-base.sh" ;;
+    memory)
+        require_root
+        bash "$MODULES_DIR/03-tune-memory.sh" ;;
+    python)
+        require_root
+        bash "$MODULES_DIR/04-tune-python.sh" ;;
+    hermes)
+        bash "$MODULES_DIR/05-hermes-setup.sh" ;;
+    verify)
+        bash "$MODULES_DIR/06-verify.sh" ;;
+    bench)
+        bash "$SCRIPT_DIR/bench/benchmark.sh" ${BENCH_ARGS[@]+"${BENCH_ARGS[@]}"} ;;
+    install-cli)
+        install_cli_globally ;;
+    reclaim)
+        require_root
+        bash "$MODULES_DIR/03-tune-memory.sh" --reclaim ;;
+    revert)
+        require_root
+        bash "$MODULES_DIR/03-tune-memory.sh" --revert
+        bash "$MODULES_DIR/04-tune-python.sh" --revert
+        if [[ -d "/var/lib/vayu" ]]; then
+            rm -rf "/var/lib/vayu/backup" "/var/lib/vayu/state.env" 2>/dev/null || true
+        fi
+        log_ok "System reverted to pristine pre-Vayu defaults." ;;
+    full)
+        run_full_pipeline ;;
+esac
